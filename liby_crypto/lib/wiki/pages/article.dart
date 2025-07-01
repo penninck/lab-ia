@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/wiki_article.dart';
+import '../models/article.dart';
 
 class WikiArticlePage extends StatelessWidget {
   final WikiArticle article;

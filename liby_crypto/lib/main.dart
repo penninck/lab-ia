@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'wiki/wiki_controller.dart';
-import 'wiki/pages/wiki_home_page.dart';
+import 'wiki/controller.dart';
+import 'wiki/pages/home.dart';
 
 void main() {
   runApp(const LibyCryptoApp());

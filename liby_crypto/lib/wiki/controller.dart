@@ -1,5 +1,5 @@
 import 'package:collection/collection.dart';
-import 'models/wiki_article.dart';
+import 'models/article.dart';
 
 class WikiController {
   final List<WikiArticle> _articles = [
