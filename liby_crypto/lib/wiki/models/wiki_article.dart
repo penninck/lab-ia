@@ -1,13 +1,13 @@
-import 'package:collection/collection.dart';
-import 'models/wiki_article.dart';
+class WikiArticle {
+  final String id;
+  final String title;
+  final String summary;
+  final String content;
 
-class WikiController {
-  final List<WikiArticle> _articles = [
-    // ... seus artigos
-  ];
-
-  List<WikiArticle> get articles => List.unmodifiable(_articles);
-
-  WikiArticle? getById(String id) =>
-      _articles.firstWhereOrNull((a) => a.id == id);
+  WikiArticle({
+    required this.id,
+    required this.title,
+    required this.summary,
+    required this.content,
+  });
 }
