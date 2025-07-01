@@ -1,10 +1,10 @@
-class WikiArticle {
+class Article {
   final String id;
   final String title;
   final String summary;
   final String content;
 
-  WikiArticle({
+  Article({
     required this.id,
     required this.title,
     required this.summary,

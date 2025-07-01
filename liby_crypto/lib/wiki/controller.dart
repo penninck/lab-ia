@@ -1,24 +1,35 @@
-import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
 import 'models/article.dart';
+import 'data/repository.dart';
 
-class WikiController {
-  final List<WikiArticle> _articles = [
-    WikiArticle(
-      id: '1',
-      title: 'O que é Blockchain?',
-      summary: 'Uma explicação simples sobre blockchain.',
-      content: 'Blockchain é uma tecnologia de registro distribuído...',
-    ),
-    WikiArticle(
-      id: '2',
-      title: 'História das Criptomoedas',
-      summary: 'Breve histórico sobre a evolução das criptomoedas.',
-      content: 'As criptomoedas começaram em 2009 com o Bitcoin...',
-    ),
-  ];
+class Controller extends ChangeNotifier {
+  final Repository _repository = Repository();
+  
+  List<Article> _articles = [];
+  bool _isLoading = false;
 
-  List<WikiArticle> get articles => List.unmodifiable(_articles);
+  List<Article> get articles => _articles;
+  bool get isLoading => _isLoading;
 
-  WikiArticle? getById(String id) =>
-      _articles.firstWhereOrNull((a) => a.id == id);
+  // Carrega artigos do Firestore
+  void loadArticles() {
+    _isLoading = true;
+    notifyListeners();
+
+    _repository.getArticles().listen((articles) {
+      _articles = articles;
+      _isLoading = false;
+      notifyListeners();
+    });
+  }
+
+  // Adiciona novo artigo
+  Future<void> addArticle(Article article) async {
+    await _repository.createArticle(article);
+  }
+
+  // Busca artigo por ID
+  Future<Article?> getArticleById(String id) async {
+    return await _repository.getArticleById(id);
+  }
 }

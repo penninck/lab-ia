@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controller.dart';
 import '../widgets/article_tile.dart';
-import 'article.dart';
+import '../models/article.dart';
 
 class WikiHomePage extends StatelessWidget {
   final WikiController controller;
