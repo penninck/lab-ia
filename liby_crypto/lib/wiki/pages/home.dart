@@ -1,113 +1,114 @@
-// lib/wiki/pages/home.dart
 import 'package:flutter/material.dart';
-import '../controller.dart';
-import '../models/article.dart';
-import '../widgets/article_tile.dart';
-import 'article.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class HomePage extends StatelessWidget {
-  final Controller controller;
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
 
-  const HomePage({Key? key, required this.controller}) : super(key: key);
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
+
+  static const List<Widget> _pages = <Widget>[
+    ArticleListFirestore(),
+    Center(child: Text('Favoritos')),
+    Center(child: Text('Perfil')),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Liby Crypto Wiki'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              showSearch<Article>(
-                context: context,
-                delegate: ArticleSearchDelegate(controller),
-              );
-            },
-          ),
-        ],
       ),
-      body: ListView.builder(
-        itemCount: controller.articles.length,
-        itemBuilder: (context, index) {
-          final article = controller.articles[index];
-          return ArticleTile(
-            article: article,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ArticlePage(article: article),
-                ),
-              );
-            },
-          );
-        },
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(color: Colors.blue),
+              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.article),
+              title: const Text('Artigos'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => _selectedIndex = 0);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.favorite),
+              title: const Text('Favoritos'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => _selectedIndex = 1);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Perfil'),
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => _selectedIndex = 2);
+              },
+            ),
+          ],
+        ),
+      ),
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.article), label: 'Artigos'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favoritos'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+        ],
       ),
     );
   }
 }
 
-class ArticleSearchDelegate extends SearchDelegate<Article> {
-  final Controller controller;
-
-  ArticleSearchDelegate(this.controller);
+class ArticleListFirestore extends StatelessWidget {
+  const ArticleListFirestore({Key? key}) : super(key: key);
 
   @override
-  List<Widget>? buildActions(BuildContext context) {
-    return [
-      if (query.isNotEmpty)
-        IconButton(
-          icon: const Icon(Icons.clear),
-          onPressed: () => query = '',
-        ),
-    ];
-  }
-
-  @override
-  Widget? buildLeading(BuildContext context) {
-    return IconButton(
-      icon: AnimatedIcon(
-        icon: AnimatedIcons.menu_arrow,
-        progress: transitionAnimation,
-      ),
-      onPressed: () => close(context, null),
-    );
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    final suggestions = controller.articles
-        .where((a) => a.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-    return ListView.builder(
-      itemCount: suggestions.length,
-      itemBuilder: (context, index) {
-        final article = suggestions[index];
-        return ListTile(
-          title: Text(article.title),
-          onTap: () {
-            query = article.title;
-            showResults(context);
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('article').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('Nenhum artigo encontrado.'));
+        }
+        final docs = snapshot.data!.docs;
+        return ListView.builder(
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final id = data['id']?.toString() ?? '';
+            final titulo = data['titulo']?.toString() ?? '';
+            final texto = data['texto']?.toString() ?? '';
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: ListTile(
+                leading: CircleAvatar(child: Text(id)),
+                title: Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(texto, maxLines: 2, overflow: TextOverflow.ellipsis),
+              ),
+            );
           },
-        );
-      },
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    final results = controller.articles
-        .where((a) => a.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-    return ListView.builder(
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        final article = results[index];
-        return ListTile(
-          title: Text(article.title),
-          subtitle: Text(article.summary),
-          onTap: () => close(context, article),
         );
       },
     );
