@@ -1,18 +1,30 @@
+// lib/wiki/widgets/article_tile.dart
 import 'package:flutter/material.dart';
 import '../models/article.dart';
 
-class WikiArticleTile extends StatelessWidget {
-  final WikiArticle article;
+class ArticleTile extends StatelessWidget {
+  final Article article;
   final VoidCallback onTap;
 
-  const WikiArticleTile({super.key, required this.article, required this.onTap});
+  const ArticleTile({
+    Key? key,
+    required this.article,
+    required this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text(article.title),
-      subtitle: Text(article.summary),
       onTap: onTap,
+      title: Text(
+        article.title,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+      subtitle: Text(
+        article.summary,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 }

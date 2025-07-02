@@ -1,10 +1,11 @@
+// lib/wiki/pages/article.dart
 import 'package:flutter/material.dart';
 import '../models/article.dart';
 
-class WikiArticlePage extends StatelessWidget {
-  final WikiArticle article;
+class ArticlePage extends StatelessWidget {
+  final Article article;
 
-  const WikiArticlePage({super.key, required this.article});
+  const ArticlePage({Key? key, required this.article}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
