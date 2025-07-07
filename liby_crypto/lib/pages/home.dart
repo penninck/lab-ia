@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import '../widgets/menu_drawer.dart';
+import '../data/repository.dart';
+import '../models/article.dart';
 import 'editor.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,6 +18,8 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final repository = Provider.of<Repository>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Think Crypto'),
@@ -27,7 +31,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () async {
               final String? result = await showSearch<String>(
                 context: context,
-                delegate: ArticleSearchDelegate(),
+                delegate: ArticleSearchDelegate(repository),
               );
               if (result != null) {
                 setState(() {
@@ -39,29 +43,29 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       drawer: const MenuDrawer(),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('article').snapshots(),
+      body: StreamBuilder<List<Article>>(
+        stream: repository.getArticles(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Erro: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('Nenhum artigo encontrado.'));
           }
-          final docs = snapshot.data!.docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
+          
+          final articles = snapshot.data!.where((article) {
             if (_searchQuery.isEmpty) return true;
-            final titulo = data['titulo']?.toString().toLowerCase() ?? '';
-            final texto = data['texto']?.toString().toLowerCase() ?? '';
-            return titulo.contains(_searchQuery.toLowerCase()) ||
-                texto.contains(_searchQuery.toLowerCase());
+            return article.titulo.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                article.texto.toLowerCase().contains(_searchQuery.toLowerCase());
           }).toList();
+
           return ListView.builder(
-            itemCount: docs.length,
+            itemCount: articles.length,
             itemBuilder: (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
-              final titulo = data['titulo']?.toString() ?? '';
-              final texto = data['texto']?.toString() ?? '';
+              final article = articles[index];
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 elevation: 2,
@@ -71,11 +75,11 @@ class _HomePageState extends State<HomePage> {
                 color: colorScheme.surfaceVariant,
                 child: ListTile(
                   title: Text(
-                    titulo,
+                    article.titulo,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    texto,
+                    article.texto,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -91,6 +95,10 @@ class _HomePageState extends State<HomePage> {
 }
 
 class ArticleSearchDelegate extends SearchDelegate<String> {
+  final Repository repository;
+
+  ArticleSearchDelegate(this.repository);
+
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [

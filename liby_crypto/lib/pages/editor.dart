@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../data/repository.dart';
+import '../models/article.dart';
 
 class EditorPage extends StatefulWidget {
   const EditorPage({Key? key}) : super(key: key);
@@ -16,12 +18,11 @@ class _EditorPageState extends State<EditorPage> {
   String? _editingArticleId;
   bool _isLoading = false;
 
-  void _startEdit(Map<String, dynamic> data, String docId) {
+  void _startEdit(Article article) {
     setState(() {
-      _editingArticleId = docId;
-      _idController.text = data['id']?.toString() ?? '';
-      _tituloController.text = data['titulo'] ?? '';
-      _textoController.text = data['texto'] ?? '';
+      _editingArticleId = article.id;
+      _tituloController.text = article.titulo;
+      _textoController.text = article.texto;
     });
   }
 
@@ -38,28 +39,46 @@ class _EditorPageState extends State<EditorPage> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
-    final data = {
-      'id': _idController.text.trim(),
-      'titulo': _tituloController.text.trim(),
-      'texto': _textoController.text.trim(),
-    };
+    final repository = Provider.of<Repository>(context, listen: false);
 
-    if (_editingArticleId == null) {
-      await FirebaseFirestore.instance.collection('article').add(data);
-    } else {
-      await FirebaseFirestore.instance.collection('article').doc(_editingArticleId).set(data);
+    try {
+      if (_editingArticleId == null) {
+        await repository.createArticle(
+          _tituloController.text.trim(),
+          _textoController.text.trim(),
+        );
+      } else {
+        await repository.updateArticle(
+          _editingArticleId!,
+          _tituloController.text.trim(),
+          _textoController.text.trim(),
+        );
+      }
+      _clearForm();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao salvar: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
-
-    setState(() => _isLoading = false);
-    _clearForm();
   }
 
   Future<void> _deleteArticle(String docId) async {
     setState(() => _isLoading = true);
-    await FirebaseFirestore.instance.collection('article').doc(docId).delete();
-    setState(() => _isLoading = false);
-    if (_editingArticleId == docId) {
-      _clearForm();
+    final repository = Provider.of<Repository>(context, listen: false);
+
+    try {
+      await repository.deleteArticle(docId);
+      if (_editingArticleId == docId) {
+        _clearForm();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao deletar: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -74,6 +93,8 @@ class _EditorPageState extends State<EditorPage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final repository = Provider.of<Repository>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Editor de Artigos'),
@@ -89,7 +110,7 @@ class _EditorPageState extends State<EditorPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _saveArticle,
+        onPressed: _isLoading ? null : _saveArticle,
         icon: const Icon(Icons.save),
         label: Text(_editingArticleId == null ? 'Adicionar' : 'Salvar'),
       ),
@@ -111,16 +132,6 @@ class _EditorPageState extends State<EditorPage> {
                         key: _formKey,
                         child: Column(
                           children: [
-                            TextFormField(
-                              controller: _idController,
-                              decoration: const InputDecoration(
-                                labelText: 'ID',
-                                filled: true,
-                                border: OutlineInputBorder(),
-                              ),
-                              validator: (value) => value == null || value.isEmpty ? 'Informe o ID' : null,
-                            ),
-                            const SizedBox(height: 16),
                             TextFormField(
                               controller: _tituloController,
                               decoration: const InputDecoration(
@@ -148,24 +159,23 @@ class _EditorPageState extends State<EditorPage> {
                   ),
                   const SizedBox(height: 24),
                   Expanded(
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance.collection('article').snapshots(),
+                    child: StreamBuilder<List<Article>>(
+                      stream: repository.getArticles(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator());
                         }
-                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        if (snapshot.hasError) {
+                          return Center(child: Text('Erro: ${snapshot.error}'));
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return const Center(child: Text('Nenhum artigo cadastrado.'));
                         }
-                        final docs = snapshot.data!.docs;
+                        final articles = snapshot.data!;
                         return ListView.builder(
-                          itemCount: docs.length,
+                          itemCount: articles.length,
                           itemBuilder: (context, index) {
-                            final data = docs[index].data() as Map<String, dynamic>;
-                            final docId = docs[index].id;
-                            final id = data['id']?.toString() ?? '';
-                            final titulo = data['titulo']?.toString() ?? '';
-                            final texto = data['texto']?.toString() ?? '';
+                            final article = articles[index];
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               elevation: 1,
@@ -176,14 +186,14 @@ class _EditorPageState extends State<EditorPage> {
                                 leading: CircleAvatar(
                                   backgroundColor: colorScheme.primaryContainer,
                                   foregroundColor: colorScheme.onPrimaryContainer,
-                                  child: Text(id),
+                                  child: Text((index + 1).toString()),
                                 ),
                                 title: Text(
-                                  titulo,
+                                  article.titulo,
                                   style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
                                 subtitle: Text(
-                                  texto,
+                                  article.texto,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -193,12 +203,12 @@ class _EditorPageState extends State<EditorPage> {
                                     IconButton(
                                       icon: const Icon(Icons.edit, color: Colors.blue),
                                       tooltip: 'Editar',
-                                      onPressed: () => _startEdit(data, docId),
+                                      onPressed: () => _startEdit(article),
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete, color: Colors.red),
                                       tooltip: 'Excluir',
-                                      onPressed: () => _deleteArticle(docId),
+                                      onPressed: () => _deleteArticle(article.id),
                                     ),
                                   ],
                                 ),

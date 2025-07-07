@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'pages/home.dart';
 import 'pages/editor.dart';
+import 'data/repository.dart';
 import 'app_routes.dart';
 
 Future<void> main() async {
@@ -36,35 +38,38 @@ class ThinkCryptoApp extends StatelessWidget {
       onSurface: deepBlue,
     );
 
-    return MaterialApp(
-      title: 'Think Crypto',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: colorScheme,
-        appBarTheme: AppBarTheme(
-          backgroundColor: colorScheme.primary,
-          foregroundColor: colorScheme.onPrimary,
-        ),
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: colorScheme.secondary,
-          foregroundColor: colorScheme.onSecondary,
-        ),
-        drawerTheme: DrawerThemeData(
-          backgroundColor: colorScheme.background,
-        ),
-        cardTheme: CardThemeData(
-          color: colorScheme.surface,
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+    return Provider<Repository>(
+      create: (context) => Repository(),
+      child: MaterialApp(
+        title: 'Think Crypto',
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: colorScheme,
+          appBarTheme: AppBarTheme(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+          ),
+          floatingActionButtonTheme: FloatingActionButtonThemeData(
+            backgroundColor: colorScheme.secondary,
+            foregroundColor: colorScheme.onSecondary,
+          ),
+          drawerTheme: DrawerThemeData(
+            backgroundColor: colorScheme.background,
+          ),
+          cardTheme: CardThemeData(
+            color: colorScheme.surface,
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
         ),
+        initialRoute: AppRoutes.home,
+        routes: {
+          AppRoutes.home: (context) => const HomePage(),
+          AppRoutes.editor: (context) => const EditorPage(),
+        },
       ),
-      initialRoute: AppRoutes.home,
-      routes: {
-        AppRoutes.home: (context) => const HomePage(),
-        AppRoutes.editor: (context) => const EditorPage(),
-      },
     );
   }
 }
