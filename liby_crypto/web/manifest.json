@@ -1,11 +1,11 @@
 {
-    "name": "liby_crypto",
-    "short_name": "liby_crypto",
+    "name": "Think Crypto",
+    "short_name": "ThinkCrypto",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#ffffff",
+    "theme_color": "#009B3A",
+    "description": "Think Crypto - Brain Disruptive",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

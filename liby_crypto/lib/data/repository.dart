@@ -3,7 +3,7 @@ import '../models/article.dart';
 
 class Repository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String collection = 'articles';
+  final String collection = 'article';
 
   // Buscar todos os artigos
   Stream<List<Article>> getArticles() {
