@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../data/repository.dart';
-import '../models/article.dart';
+import 'package:liby_crypto/app_exports.dart';
 
 class EditorPage extends StatefulWidget {
   const EditorPage({Key? key}) : super(key: key);
@@ -12,88 +11,75 @@ class EditorPage extends StatefulWidget {
 
 class _EditorPageState extends State<EditorPage> {
   final _formKey = GlobalKey<FormState>();
-  final _idController = TextEditingController();
   final _tituloController = TextEditingController();
   final _textoController = TextEditingController();
-  String? _editingArticleId;
+  String? _editingId;
   bool _isLoading = false;
-
-  void _startEdit(Article article) {
-    setState(() {
-      _editingArticleId = article.id;
-      _tituloController.text = article.titulo;
-      _textoController.text = article.texto;
-    });
-  }
-
-  void _clearForm() {
-    setState(() {
-      _editingArticleId = null;
-      _idController.clear();
-      _tituloController.clear();
-      _textoController.clear();
-    });
-  }
-
-  Future<void> _saveArticle() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
-
-    final repository = Provider.of<Repository>(context, listen: false);
-
-    try {
-      if (_editingArticleId == null) {
-        await repository.createArticle(
-          _tituloController.text.trim(),
-          _textoController.text.trim(),
-        );
-      } else {
-        await repository.updateArticle(
-          _editingArticleId!,
-          _tituloController.text.trim(),
-          _textoController.text.trim(),
-        );
-      }
-      _clearForm();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao salvar: $e')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _deleteArticle(String docId) async {
-    setState(() => _isLoading = true);
-    final repository = Provider.of<Repository>(context, listen: false);
-
-    try {
-      await repository.deleteArticle(docId);
-      if (_editingArticleId == docId) {
-        _clearForm();
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro ao deletar: $e')),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
 
   @override
   void dispose() {
-    _idController.dispose();
     _tituloController.dispose();
     _textoController.dispose();
     super.dispose();
   }
 
+  void _startEdit(Article article) {
+    setState(() {
+      _editingId = article.id;
+      _tituloController.text = article.titulo;
+      _textoController.text = article.texto;
+    });
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    final repo = Provider.of<Repository>(context, listen: false);
+    final title = _tituloController.text.trim();
+    final text = _textoController.text.trim();
+    try {
+      if (_editingId == null) {
+        await repo.createArticle(title, text);
+      } else {
+        await repo.updateArticle(_editingId!, title, text);
+      }
+      _clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _delete(String id) async {
+    setState(() => _isLoading = true);
+    final repo = Provider.of<Repository>(context, listen: false);
+    try {
+      await repo.deleteArticle(id);
+      if (_editingId == id) _clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro: $e')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _clear() {
+    setState(() {
+      _editingId = null;
+      _tituloController.clear();
+      _textoController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final repository = Provider.of<Repository>(context);
+    final repo = Provider.of<Repository>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -101,33 +87,32 @@ class _EditorPageState extends State<EditorPage> {
         backgroundColor: colorScheme.primaryContainer,
         foregroundColor: colorScheme.onPrimaryContainer,
         actions: [
-          if (_editingArticleId != null)
+          if (_editingId != null)
             IconButton(
               icon: const Icon(Icons.clear),
-              tooltip: 'Cancelar edição',
-              onPressed: _clearForm,
+              onPressed: _clear,
             ),
         ],
       ),
+      drawer: const MenuDrawer(),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isLoading ? null : _saveArticle,
+        onPressed: _isLoading ? null : _save,
         icon: const Icon(Icons.save),
-        label: Text(_editingArticleId == null ? 'Adicionar' : 'Salvar'),
+        label: Text(_editingId == null ? 'Adicionar' : 'Salvar'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   Card(
-                    elevation: 2,
                     color: colorScheme.surfaceVariant,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(16),
                       child: Form(
                         key: _formKey,
                         child: Column(
@@ -136,79 +121,71 @@ class _EditorPageState extends State<EditorPage> {
                               controller: _tituloController,
                               decoration: const InputDecoration(
                                 labelText: 'Título',
-                                filled: true,
                                 border: OutlineInputBorder(),
                               ),
-                              validator: (value) => value == null || value.isEmpty ? 'Informe o título' : null,
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'Informe o título' : null,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             TextFormField(
                               controller: _textoController,
+                              maxLines: 4,
                               decoration: const InputDecoration(
                                 labelText: 'Texto',
-                                filled: true,
                                 border: OutlineInputBorder(),
                               ),
-                              maxLines: 4,
-                              validator: (value) => value == null || value.isEmpty ? 'Informe o texto' : null,
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'Informe o texto' : null,
                             ),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   Expanded(
                     child: StreamBuilder<List<Article>>(
-                      stream: repository.getArticles(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                      stream: repo.getArticles(),
+                      builder: (ctx, snap) {
+                        if (snap.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator());
                         }
-                        if (snapshot.hasError) {
-                          return Center(child: Text('Erro: ${snapshot.error}'));
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        final list = snap.data ?? [];
+                        if (list.isEmpty) {
                           return const Center(child: Text('Nenhum artigo cadastrado.'));
                         }
-                        final articles = snapshot.data!;
                         return ListView.builder(
-                          itemCount: articles.length,
-                          itemBuilder: (context, index) {
-                            final article = articles[index];
+                          itemCount: list.length,
+                          itemBuilder: (ctx, i) {
+                            final art = list[i];
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 6),
-                              elevation: 1,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: ListTile(
+                                title: Text(art.titulo,
+                                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text(
+                                  art.texto,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                                 leading: CircleAvatar(
                                   backgroundColor: colorScheme.primaryContainer,
                                   foregroundColor: colorScheme.onPrimaryContainer,
-                                  child: Text((index + 1).toString()),
-                                ),
-                                title: Text(
-                                  article.titulo,
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                subtitle: Text(
-                                  article.texto,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                  child: Text('${i + 1}'),
                                 ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
                                       icon: const Icon(Icons.edit, color: Colors.blue),
-                                      tooltip: 'Editar',
-                                      onPressed: () => _startEdit(article),
+                                      onPressed: () => _startEdit(art),
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete, color: Colors.red),
-                                      tooltip: 'Excluir',
-                                      onPressed: () => _deleteArticle(article.id),
+                                      onPressed: () => _delete(art.id),
                                     ),
                                   ],
                                 ),

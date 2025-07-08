@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
-import 'pages/home.dart';
-import 'pages/editor.dart';
-import 'data/repository.dart';
-import 'app_routes.dart';
+import 'app_exports.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,12 +38,12 @@ class ThinkCryptoApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<Repository>(
-          create: (context) => Repository(),
+          create: (_) => Repository(),
         ),
       ],
       child: MaterialApp(
         title: 'Think Crypto',
-        debugShowCheckedModeBanner: false, // Esta linha remove o banner DEBUG
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: colorScheme,
@@ -71,8 +68,8 @@ class ThinkCryptoApp extends StatelessWidget {
         ),
         initialRoute: AppRoutes.home,
         routes: {
-          AppRoutes.home: (context) => const HomePage(),
-          AppRoutes.editor: (context) => const EditorPage(),
+          AppRoutes.home: (_) => const HomePage(),
+          AppRoutes.editor: (_) => const EditorPage(),
         },
       ),
     );

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../widgets/menu_drawer.dart';
-import '../data/repository.dart';
-import '../models/article.dart';
+import 'package:liby_crypto/app_exports.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -30,12 +28,10 @@ class _HomePageState extends State<HomePage> {
             onPressed: () async {
               final String? result = await showSearch<String>(
                 context: context,
-                delegate: ArticleSearchDelegate(repository),
+                delegate: ArticleSearchDelegate(),
               );
               if (result != null) {
-                setState(() {
-                  _searchQuery = result;
-                });
+                setState(() => _searchQuery = result);
               }
             },
           ),
@@ -51,16 +47,17 @@ class _HomePageState extends State<HomePage> {
           if (snapshot.hasError) {
             return Center(child: Text('Erro: ${snapshot.error}'));
           }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          final articles = (snapshot.data ?? [])
+              .where((a) {
+                if (_searchQuery.isEmpty) return true;
+                final q = _searchQuery.toLowerCase();
+                return a.titulo.toLowerCase().contains(q) ||
+                       a.texto.toLowerCase().contains(q);
+              })
+              .toList();
+          if (articles.isEmpty) {
             return const Center(child: Text('Nenhum artigo encontrado.'));
           }
-
-          final articles = snapshot.data!.where((article) {
-            if (_searchQuery.isEmpty) return true;
-            return article.titulo.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                article.texto.toLowerCase().contains(_searchQuery.toLowerCase());
-          }).toList();
-
           return ListView.builder(
             itemCount: articles.length,
             itemBuilder: (context, index) {
@@ -73,6 +70,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 color: colorScheme.surfaceVariant,
                 child: ListTile(
+                  leading: Icon(Icons.article_outlined, color: colorScheme.secondary),
                   title: Text(
                     article.titulo,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -82,7 +80,6 @@ class _HomePageState extends State<HomePage> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  leading: Icon(Icons.article_outlined, color: colorScheme.secondary),
                 ),
               );
             },
@@ -94,10 +91,6 @@ class _HomePageState extends State<HomePage> {
 }
 
 class ArticleSearchDelegate extends SearchDelegate<String> {
-  final Repository repository;
-
-  ArticleSearchDelegate(this.repository);
-
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [
@@ -118,21 +111,17 @@ class ArticleSearchDelegate extends SearchDelegate<String> {
   }
 
   @override
-  Widget buildSuggestions(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      alignment: Alignment.center,
-      child: const Text('Digite para pesquisar artigos...'),
-    );
-  }
-
-  @override
   Widget buildResults(BuildContext context) {
-    return Container();
+    close(context, query);
+    return const SizedBox.shrink();
   }
 
   @override
-  void showResults(BuildContext context) {
-    close(context, query);
+  Widget buildSuggestions(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.search),
+      title: Text(query.isEmpty ? 'Digite para pesquisar...' : query),
+      onTap: () => close(context, query),
+    );
   }
 }
