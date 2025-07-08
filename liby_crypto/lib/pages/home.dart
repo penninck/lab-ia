@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../widgets/menu_drawer.dart';
 import '../data/repository.dart';
 import '../models/article.dart';
-import 'editor.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -18,7 +17,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final repository = Provider.of<Repository>(context);
+    final repository = Provider.of<Repository>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -55,7 +54,7 @@ class _HomePageState extends State<HomePage> {
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('Nenhum artigo encontrado.'));
           }
-          
+
           final articles = snapshot.data!.where((article) {
             if (_searchQuery.isEmpty) return true;
             return article.titulo.toLowerCase().contains(_searchQuery.toLowerCase()) ||

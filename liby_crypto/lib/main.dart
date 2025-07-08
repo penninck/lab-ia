@@ -38,10 +38,15 @@ class ThinkCryptoApp extends StatelessWidget {
       onSurface: deepBlue,
     );
 
-    return Provider<Repository>(
-      create: (context) => Repository(),
+    return MultiProvider(
+      providers: [
+        Provider<Repository>(
+          create: (context) => Repository(),
+        ),
+      ],
       child: MaterialApp(
         title: 'Think Crypto',
+        debugShowCheckedModeBanner: false, // Esta linha remove o banner DEBUG
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: colorScheme,
