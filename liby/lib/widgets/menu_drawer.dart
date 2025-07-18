@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:liby_crypto/app_exports.dart';
+import 'package:liby/app_exports.dart';
 
 class MenuDrawer extends StatelessWidget {
   const MenuDrawer({Key? key}) : super(key: key);
