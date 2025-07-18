@@ -11,11 +11,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String _searchQuery = '';
-  String _selectedCategory = 'Todas';
-
-  final List<String> categories = [
-    'Todas', 'Bitcoin', 'Ethereum', 'DeFi', 'NFTs', 'Regulamentação', 'Mineração', 'CBDCs', 'Altcoins'
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -49,75 +44,8 @@ class _HomePageState extends State<HomePage> {
             constraints: const BoxConstraints(maxWidth: 980),
             child: Column(
               children: [
-                // Topo com logo e slogan
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Column(
-                    children: [
-                      Image.asset('assets/logo.png', width: 64, height: 64),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Think Crypto',
-                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Sua fonte completa de notícias sobre criptomoedas e blockchain',
-                        style: TextStyle(fontSize: 15, color: Colors.black54),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-                // Card Tempo Real
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  child: Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    child: ListTile(
-                      leading: Icon(Icons.flash_on, color: colorScheme.primary),
-                      title: const Text('Tempo Real'),
-                      subtitle: const Text('Notícias em tempo real sobre o mundo blockchain'),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        onPressed: () {},
-                        child: const Text('Explorar Notícias'),
-                      ),
-                    ),
-                  ),
-                ),
-                // Filtros de categoria
-                SizedBox(
-                  height: 38,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: categories.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
-                    itemBuilder: (ctx, i) {
-                      final cat = categories[i];
-                      final selected = cat == _selectedCategory;
-                      return ChoiceChip(
-                        label: Text(cat),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _selectedCategory = cat),
-                        selectedColor: colorScheme.primary,
-                        labelStyle: TextStyle(
-                          color: selected ? colorScheme.onPrimary : colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        backgroundColor: colorScheme.primary.withOpacity(0.08),
-                      );
-                    },
-                  ),
-                ),
+                // Filtros de categoria removidos daqui!
                 const SizedBox(height: 8),
-                // Lista de notícias responsiva
                 Expanded(
                   child: StreamBuilder<List<Article>>(
                     stream: repository.getArticles(),
@@ -129,19 +57,16 @@ class _HomePageState extends State<HomePage> {
                         return Center(child: Text('Erro: ${snapshot.error}'));
                       }
                       final articles = (snapshot.data ?? []).where((a) {
-                        if (_selectedCategory == 'Todas') return true;
-                        return a.titulo.toLowerCase().contains(_selectedCategory.toLowerCase());
-                      }).where((a) {
                         if (_searchQuery.isEmpty) return true;
                         final q = _searchQuery.toLowerCase();
-                        return a.titulo.toLowerCase().contains(q) || a.texto.toLowerCase().contains(q);
+                        return a.titulo.toLowerCase().contains(q) ||
+                            a.texto.toLowerCase().contains(q);
                       }).toList();
 
                       if (articles.isEmpty) {
                         return const Center(child: Text('Nenhuma notícia encontrada.'));
                       }
 
-                      // Responsivo: grid para web, lista para mobile
                       final isWide = MediaQuery.of(context).size.width > 700;
                       if (isWide) {
                         return GridView.builder(
@@ -193,25 +118,33 @@ class _NewsCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: colorScheme.surfaceVariant,
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(Icons.article, color: colorScheme.primary, size: 32),
-        ),
-        title: Text(
-          article.titulo,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: Text(
-          article.texto,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              article.titulo,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            if (article.subTitulo.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 3.0, bottom: 6.0),
+                child: Text(
+                  article.subTitulo,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            Text(
+              article.texto,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );

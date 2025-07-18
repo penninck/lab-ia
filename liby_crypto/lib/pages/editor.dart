@@ -12,6 +12,7 @@ class EditorPage extends StatefulWidget {
 class _EditorPageState extends State<EditorPage> {
   final _formKey = GlobalKey<FormState>();
   final _tituloController = TextEditingController();
+  final _subTituloController = TextEditingController();
   final _textoController = TextEditingController();
   String? _editingId;
   bool _isLoading = false;
@@ -19,6 +20,7 @@ class _EditorPageState extends State<EditorPage> {
   @override
   void dispose() {
     _tituloController.dispose();
+    _subTituloController.dispose();
     _textoController.dispose();
     super.dispose();
   }
@@ -27,7 +29,17 @@ class _EditorPageState extends State<EditorPage> {
     setState(() {
       _editingId = article.id;
       _tituloController.text = article.titulo;
+      _subTituloController.text = article.subTitulo;
       _textoController.text = article.texto;
+    });
+  }
+
+  void _clear() {
+    setState(() {
+      _editingId = null;
+      _tituloController.clear();
+      _subTituloController.clear();
+      _textoController.clear();
     });
   }
 
@@ -36,12 +48,13 @@ class _EditorPageState extends State<EditorPage> {
     setState(() => _isLoading = true);
     final repo = Provider.of<Repository>(context, listen: false);
     final title = _tituloController.text.trim();
+    final subTitle = _subTituloController.text.trim();
     final text = _textoController.text.trim();
     try {
       if (_editingId == null) {
-        await repo.createArticle(title, text);
+        await repo.createArticle(title, subTitle, text);
       } else {
-        await repo.updateArticle(_editingId!, title, text);
+        await repo.updateArticle(_editingId!, title, subTitle, text);
       }
       _clear();
     } catch (e) {
@@ -66,14 +79,6 @@ class _EditorPageState extends State<EditorPage> {
     } finally {
       setState(() => _isLoading = false);
     }
-  }
-
-  void _clear() {
-    setState(() {
-      _editingId = null;
-      _tituloController.clear();
-      _textoController.clear();
-    });
   }
 
   @override
@@ -128,6 +133,16 @@ class _EditorPageState extends State<EditorPage> {
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
+                              controller: _subTituloController,
+                              decoration: const InputDecoration(
+                                labelText: 'Subtítulo',
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (v) =>
+                                  v == null || v.isEmpty ? 'Informe o subtítulo' : null,
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
                               controller: _textoController,
                               maxLines: 4,
                               decoration: const InputDecoration(
@@ -167,15 +182,11 @@ class _EditorPageState extends State<EditorPage> {
                                 title: Text(art.titulo,
                                     style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Text(
-                                  art.texto,
-                                  maxLines: 2,
+                                  art.subTitulo,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                leading: CircleAvatar(
-                                  backgroundColor: colorScheme.primaryContainer,
-                                  foregroundColor: colorScheme.onPrimaryContainer,
-                                  child: Text('${i + 1}'),
-                                ),
+                                isThreeLine: true,
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
