@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:liby/app_exports.dart';
+import '../widgets/menu_drawer.dart';
+import '../models/article.dart';
+import '../theme/theme.dart';
+import '../pages/article_detail.dart';
+import '../data/repository.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -14,38 +18,47 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = context.appColors;
+    final typography = context.appTypography;
     final repository = Provider.of<Repository>(context, listen: false);
 
     return Scaffold(
       drawer: const MenuDrawer(),
+      backgroundColor: colors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Think Crypto'),
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () async {
-              final String? result = await showSearch<String>(
-                context: context,
-                delegate: ArticleSearchDelegate(),
-              );
-              if (result != null) {
-                setState(() => _searchQuery = result);
-              }
-            },
-          ),
-        ],
+        backgroundColor: colors.primaryGreen,
+        foregroundColor: colors.backgroundLight,
+        title: Text(
+          'Think Crypto',
+          style: typography.titleLarge.copyWith(color: colors.backgroundLight),
+        ),
+        elevation: 0,
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 980),
+            constraints: const BoxConstraints(maxWidth: 1100),
             child: Column(
               children: [
-                // Filtros de categoria removidos daqui!
-                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: TextField(
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                    style: typography.bodyLarge.copyWith(color: colors.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Explorar',
+                      hintStyle: typography.bodyLarge.copyWith(color: colors.textSecondary),
+                      filled: true,
+                      fillColor: colors.cardBackground,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: StreamBuilder<List<Article>>(
                     stream: repository.getArticles(),
@@ -54,45 +67,83 @@ class _HomePageState extends State<HomePage> {
                         return const Center(child: CircularProgressIndicator());
                       }
                       if (snapshot.hasError) {
-                        return Center(child: Text('Erro: ${snapshot.error}'));
+                        return Center(
+                          child: Text(
+                            'Erro: ${snapshot.error}',
+                            style: typography.bodyMedium.copyWith(color: colors.textPrimary),
+                          ),
+                        );
                       }
-                      final articles = (snapshot.data ?? []).where((a) {
+                      final filteredArticles = (snapshot.data ?? []).where((article) {
                         if (_searchQuery.isEmpty) return true;
                         final q = _searchQuery.toLowerCase();
-                        return a.titulo.toLowerCase().contains(q) ||
-                            a.texto.toLowerCase().contains(q);
+                        return article.titulo.toLowerCase().contains(q) ||
+                            article.subTitulo.toLowerCase().contains(q) ||
+                            article.texto.toLowerCase().contains(q);
                       }).toList();
 
-                      if (articles.isEmpty) {
-                        return const Center(child: Text('Nenhuma notícia encontrada.'));
+                      if (filteredArticles.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Nenhuma notícia encontrada.',
+                            style: typography.bodyMedium.copyWith(color: colors.textPrimary),
+                          ),
+                        );
                       }
 
-                      final isWide = MediaQuery.of(context).size.width > 700;
-                      if (isWide) {
-                        return GridView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
-                            childAspectRatio: 1.4,
-                          ),
-                          itemCount: articles.length,
-                          itemBuilder: (ctx, i) {
-                            final art = articles[i];
-                            return _NewsCard(article: art, colorScheme: colorScheme);
-                          },
-                        );
-                      } else {
-                        return ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          itemCount: articles.length,
-                          itemBuilder: (ctx, i) {
-                            final art = articles[i];
-                            return _NewsCard(article: art, colorScheme: colorScheme);
-                          },
-                        );
-                      }
+                      final isWide = MediaQuery.of(context).size.width > 900;
+                      final crossAxisCount = isWide ? 3 : MediaQuery.of(context).size.width > 600 ? 2 : 1;
+
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(24),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 24,
+                          mainAxisSpacing: 24,
+                          childAspectRatio: 1.2,
+                        ),
+                        itemCount: filteredArticles.length,
+                        itemBuilder: (ctx, i) {
+                          final article = filteredArticles[i];
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(24),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ArticleDetailPage(article: article),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: colors.primaryGreen,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    article.subTitulo,
+                                    style: typography.titleLarge.copyWith(
+                                      color: colors.backgroundLight,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    article.texto,
+                                    style: typography.bodyMedium.copyWith(
+                                      color: colors.backgroundLight,
+                                    ),
+                                    maxLines: 5,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
                     },
                   ),
                 ),
@@ -101,88 +152,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _NewsCard extends StatelessWidget {
-  final Article article;
-  final ColorScheme colorScheme;
-
-  const _NewsCard({required this.article, required this.colorScheme});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: colorScheme.surfaceVariant,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              article.titulo,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            if (article.subTitulo.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 3.0, bottom: 6.0),
-                child: Text(
-                  article.subTitulo,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            Text(
-              article.texto,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ArticleSearchDelegate extends SearchDelegate<String> {
-  @override
-  List<Widget>? buildActions(BuildContext context) {
-    return [
-      if (query.isNotEmpty)
-        IconButton(
-          icon: const Icon(Icons.clear),
-          onPressed: () => query = '',
-        ),
-    ];
-  }
-
-  @override
-  Widget? buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back),
-      onPressed: () => close(context, ''),
-    );
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    close(context, query);
-    return const SizedBox.shrink();
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.search),
-      title: Text(query.isEmpty ? 'Digite para pesquisar...' : query),
-      onTap: () => close(context, query),
     );
   }
 }
