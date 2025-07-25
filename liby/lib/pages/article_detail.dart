@@ -14,6 +14,9 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final typography = context.appTypography;
+
     final isMatch = (String text) {
       if (_searchQuery.trim().isEmpty) return true;
       final q = _searchQuery.toLowerCase();
@@ -23,33 +26,27 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     final highlight = (String text) {
       if (_searchQuery.trim().isEmpty) return Text(
         text,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.white,
-        ),
+        style: typography.bodyLarge.copyWith(color: colors.backgroundLight),
       );
       final q = _searchQuery.toLowerCase();
       final matches = text.toLowerCase().indexOf(q);
       if (matches == -1) return Text(
         text,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.white,
-        ),
+        style: typography.bodyLarge.copyWith(color: colors.backgroundLight),
       );
       final before = text.substring(0, matches);
       final match = text.substring(matches, matches + q.length);
       final after = text.substring(matches + q.length);
       return RichText(
         text: TextSpan(
-          style: const TextStyle(fontSize: 16, color: Colors.white),
+          style: typography.bodyLarge.copyWith(color: colors.backgroundLight),
           children: [
             TextSpan(text: before),
             TextSpan(
               text: match,
-              style: const TextStyle(
-                backgroundColor: Color(0xFFFCF79A),
-                color: Colors.black,
+              style: typography.bodyLarge.copyWith(
+                backgroundColor: colors.bitcoinOrange,
+                color: colors.backgroundDark,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -61,11 +58,11 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Artigo'),
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
+        title: Text('Artigo', style: typography.titleLarge),
+        backgroundColor: colors.primaryGreen,
+        foregroundColor: colors.backgroundLight,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: colors.backgroundLight,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 700),
@@ -74,25 +71,22 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                // Campo de busca "Explorar"
                 Padding(
                   padding: const EdgeInsets.only(bottom: 24),
                   child: TextField(
                     onChanged: (value) => setState(() => _searchQuery = value),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: typography.bodyLarge.copyWith(
+                      color: colors.backgroundLight,
                       fontWeight: FontWeight.bold,
-                      fontSize: 20,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Explorar',
-                      hintStyle: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 20,
+                      hintStyle: typography.bodyLarge.copyWith(
+                        color: colors.backgroundLight.withOpacity(0.7),
                         fontWeight: FontWeight.bold,
                       ),
                       filled: true,
-                      fillColor: Colors.black,
+                      fillColor: colors.backgroundDark,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide.none,
@@ -107,7 +101,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: colors.primaryGreen,
                     borderRadius: BorderRadius.circular(24),
                   ),
                   padding: const EdgeInsets.all(24),
@@ -117,20 +111,19 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                       if (isMatch(widget.article.subTitulo))
                         Text(
                           widget.article.subTitulo,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 24,
-                            color: Colors.white,
+                          style: typography.headlineLarge.copyWith(
+                            color: colors.backgroundLight,
                           ),
                         ),
                       const SizedBox(height: 20),
-                      // Destaque no texto conforme pesquisa
                       if (isMatch(widget.article.texto))
                         highlight(widget.article.texto)
                       else
-                        const Text(
+                        Text(
                           'Nenhum trecho correspondente ao filtro.',
-                          style: TextStyle(fontSize: 16, color: Colors.white54),
+                          style: typography.bodyMedium.copyWith(
+                            color: colors.backgroundLight.withOpacity(0.7),
+                          ),
                         ),
                     ],
                   ),

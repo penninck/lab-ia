@@ -83,14 +83,16 @@ class _EditorPageState extends State<EditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = context.appColors;
+    final typography = context.appTypography;
     final repo = Provider.of<Repository>(context, listen: false);
 
     return Scaffold(
+      backgroundColor: colors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Editor de Artigos'),
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
+        title: Text('Editor de Artigos', style: typography.titleLarge),
+        backgroundColor: colors.primaryGreen,
+        foregroundColor: colors.backgroundLight,
         actions: [
           if (_editingId != null)
             IconButton(
@@ -102,6 +104,8 @@ class _EditorPageState extends State<EditorPage> {
       drawer: const MenuDrawer(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _isLoading ? null : _save,
+        backgroundColor: colors.bitcoinOrange,
+        foregroundColor: colors.backgroundLight,
         icon: const Icon(Icons.save),
         label: Text(_editingId == null ? 'Adicionar' : 'Salvar'),
       ),
@@ -112,7 +116,7 @@ class _EditorPageState extends State<EditorPage> {
               child: Column(
                 children: [
                   Card(
-                    color: colorScheme.surfaceVariant,
+                    color: colors.cardBackground,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -124,9 +128,13 @@ class _EditorPageState extends State<EditorPage> {
                           children: [
                             TextFormField(
                               controller: _tituloController,
-                              decoration: const InputDecoration(
+                              style: typography.bodyLarge,
+                              decoration: InputDecoration(
                                 labelText: 'Título',
-                                border: OutlineInputBorder(),
+                                labelStyle: typography.bodyMedium.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                                border: const OutlineInputBorder(),
                               ),
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Informe o título' : null,
@@ -134,9 +142,13 @@ class _EditorPageState extends State<EditorPage> {
                             const SizedBox(height: 12),
                             TextFormField(
                               controller: _subTituloController,
-                              decoration: const InputDecoration(
+                              style: typography.bodyLarge,
+                              decoration: InputDecoration(
                                 labelText: 'Subtítulo',
-                                border: OutlineInputBorder(),
+                                labelStyle: typography.bodyMedium.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                                border: const OutlineInputBorder(),
                               ),
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Informe o subtítulo' : null,
@@ -145,9 +157,13 @@ class _EditorPageState extends State<EditorPage> {
                             TextFormField(
                               controller: _textoController,
                               maxLines: 4,
-                              decoration: const InputDecoration(
+                              style: typography.bodyLarge,
+                              decoration: InputDecoration(
                                 labelText: 'Texto',
-                                border: OutlineInputBorder(),
+                                labelStyle: typography.bodyMedium.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                                border: const OutlineInputBorder(),
                               ),
                               validator: (v) =>
                                   v == null || v.isEmpty ? 'Informe o texto' : null,
@@ -167,7 +183,14 @@ class _EditorPageState extends State<EditorPage> {
                         }
                         final list = snap.data ?? [];
                         if (list.isEmpty) {
-                          return const Center(child: Text('Nenhum artigo cadastrado.'));
+                          return Center(
+                            child: Text(
+                              'Nenhum artigo cadastrado.',
+                              style: typography.bodyMedium.copyWith(
+                                color: colors.textSecondary,
+                              ),
+                            ),
+                          );
                         }
                         return ListView.builder(
                           itemCount: list.length,
@@ -175,23 +198,30 @@ class _EditorPageState extends State<EditorPage> {
                             final art = list[i];
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 6),
+                              color: colors.cardBackground,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: ListTile(
-                                title: Text(art.titulo,
-                                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                                title: Text(
+                                  art.titulo,
+                                  style: typography.titleLarge.copyWith(
+                                    color: colors.textPrimary,
+                                  ),
+                                ),
                                 subtitle: Text(
                                   art.subTitulo,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
+                                  style: typography.bodyMedium.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
                                 ),
-                                isThreeLine: true,
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.edit, color: Colors.blue),
+                                      icon: Icon(Icons.edit, color: colors.primaryGreen),
                                       onPressed: () => _startEdit(art),
                                     ),
                                     IconButton(

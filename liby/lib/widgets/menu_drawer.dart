@@ -6,53 +6,51 @@ class MenuDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = context.appColors;
+    final typography = context.appTypography;
 
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: const BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(
+              color: colors.backgroundLight,
             ),
             child: Align(
               alignment: Alignment.centerLeft,
               child: ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
+                shaderCallback: (bounds) => LinearGradient(
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                   colors: [
-                    Color(0xFF009B3A),
-                    Color(0xFFF7931A),
+                    colors.primaryGreen,
+                    colors.bitcoinOrange,
                   ],
                 ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
                 blendMode: BlendMode.srcIn,
-                child: const Text(
+                child: Text(
                   'Think Crypto',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                    color: Colors.white,
+                  style: typography.displayLarge.copyWith(
+                    color: colors.backgroundLight,
                   ),
                 ),
               ),
             ),
           ),
           ListTile(
-            leading: Icon(Icons.article, size: 24, color: colorScheme.primary),
-            title: const Text('Think'),
-            subtitle: const Text('Notícias e artigos'),
+            leading: Icon(Icons.article, size: 24, color: colors.primaryGreen),
+            title: Text('Think', style: typography.titleLarge),
+            subtitle: Text('Notícias e artigos', style: typography.bodyMedium),
             onTap: () {
               Navigator.pop(context);
               Navigator.pushReplacementNamed(context, AppRoutes.home);
             },
           ),
           ListTile(
-            leading: Icon(Icons.edit, size: 24, color: colorScheme.secondary),
-            title: const Text('Editor'),
-            subtitle: const Text('Criar ou editar artigo'),
+            leading: Icon(Icons.edit, size: 24, color: colors.bitcoinOrange),
+            title: Text('Editor', style: typography.titleLarge),
+            subtitle: Text('Criar ou editar artigo', style: typography.bodyMedium),
             onTap: () {
               Navigator.pop(context);
               Navigator.pushReplacementNamed(context, AppRoutes.editor);
@@ -63,9 +61,8 @@ class MenuDrawer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
               'Versão 1.0.0',
-              style: TextStyle(
-                color: colorScheme.onSurface.withOpacity(0.6),
-                fontSize: 12,
+              style: typography.bodyMedium.copyWith(
+                color: colors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),

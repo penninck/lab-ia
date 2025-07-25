@@ -6,5 +6,3 @@ export 'pages/editor.dart' show EditorPage;
 export 'pages/article_detail.dart' show ArticleDetailPage;
 export 'widgets/menu_drawer.dart';
 export 'theme/theme.dart';
-export 'theme/color.dart';
-export 'theme/typography.dart';
