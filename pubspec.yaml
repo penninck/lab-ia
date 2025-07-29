@@ -1,4 +1,4 @@
-name: liby
+name: think
 
 description: "Think Crypto"
 
@@ -27,5 +27,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
-    - assets/logo.png
-    - assets/images/
+    - assets/images/logo.png
